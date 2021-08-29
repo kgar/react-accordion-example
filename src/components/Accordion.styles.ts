@@ -66,12 +66,9 @@ export const Body = styled.div`
   &.closed {
     max-height: 0;
     overflow: hidden;
-    transition: max-height 0.25ms cubic-bezier(0.5, 0, 0.1, 1);
   }
-  &.open {
-    max-height: 0px;
-    transition: max-height 0.25ms cubic-bezier(0.5, 0, 0.1, 1);
-  }
+  // TODO: Make this work..
+  transition: max-height 1000ms cubic-bezier(0.5, 0, 0.1, 1);
   span {
     display: block;
     padding: 0.8em 2.2em 0.8em 1.2em;

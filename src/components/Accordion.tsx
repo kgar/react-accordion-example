@@ -1,4 +1,9 @@
-import React, { useState, useContext, createContext, Props, PropsWithChildren } from "react";
+import React, {
+  useState,
+  useContext,
+  createContext,
+  PropsWithChildren,
+} from "react";
 import {
   Container,
   Inner,
@@ -6,62 +11,120 @@ import {
   Body,
   Frame,
   Title,
-  Header
+  Header,
 } from "./Accordion.styles";
 
-type ToggleContextProps = {
-    isShown: boolean;
-    setIsShown: React.Dispatch<React.SetStateAction<boolean>>
-} | undefined;
-
-const ToggleContext = createContext<ToggleContextProps>(undefined);
-export default function Accordion({children, ...restProps}: PropsWithChildren<unknown>) {
-    return (
-        <Container {...restProps}>
-            <Inner>{children}</Inner>
-        </Container>
-    );
+export default function Accordion({
+  children,
+  ...restProps
+}: PropsWithChildren<unknown>) {
+  return (
+    <Container {...restProps}>
+      <Inner>{children}</Inner>
+    </Container>
+  );
 }
 
-Accordion.Title = function AccordionTitle({children, ...restProps}: PropsWithChildren<unknown>) {
-    return <Title {...restProps}>{children}</Title>
-}
+Accordion.Title = function AccordionTitle({
+  children,
+  ...restProps
+}: PropsWithChildren<unknown>) {
+  return <Title {...restProps}>{children}</Title>;
+};
 
-Accordion.Frame = function AccordionFrame({children, ...restProps}: PropsWithChildren<unknown>) {
-    return <Frame {...restProps}>{children}</Frame>
-}
+type AccordionFrameContextProps = {
+  selectedIndex: number | undefined;
+  setSelectedIndex: React.Dispatch<React.SetStateAction<number | undefined>>;
+};
 
-Accordion.Item = function AccordionItem({children, ...restProps}: PropsWithChildren<unknown>) {
-    const [isShown, setIsShown] = useState(true);
-    return (
-        <ToggleContext.Provider value={{ isShown, setIsShown }}>
-            <Item {...restProps}>{children}</Item>
-        </ToggleContext.Provider>
-    )
-}
+const AccordionFrameContext = React.createContext<
+  AccordionFrameContextProps | undefined
+>(undefined);
+
+Accordion.Frame = function AccordionFrame({
+  children,
+  ...restProps
+}: PropsWithChildren<unknown>) {
+  const [selectedIndex, setSelectedIndex] = useState<number | undefined>(
+    undefined
+  );
+  return (
+    <AccordionFrameContext.Provider value={{ selectedIndex, setSelectedIndex }}>
+      <Frame {...restProps}>
+        {React.Children.map(children, (child, index) => {
+          if (React.isValidElement(child)) {
+            return React.cloneElement(child, { index });
+          }
+          return child;
+        })}
+        )
+      </Frame>
+    </AccordionFrameContext.Provider>
+  );
+};
+
+type AccordionContextProps =
+  | {
+      index: number;
+    }
+  | undefined;
+
+const AccordionItemContext = createContext<AccordionContextProps>(undefined);
+
+Accordion.Item = function AccordionItem({
+  children,
+  index,
+  ...restProps
+}: PropsWithChildren<unknown & { index?: number }>) {
+  return index !== undefined ? (
+    <AccordionItemContext.Provider value={{ index }}>
+      <Item {...restProps}>{children}</Item>
+    </AccordionItemContext.Provider>
+  ) : null;
+};
 
 Accordion.ItemHeader = function AccordionHeader({
-    children, ...restProps
+  children,
+  ...restProps
 }: React.PropsWithChildren<unknown>) {
-    const {isShown, setIsShown} = useToggleContext();
-    return (
-        <Header onClick={() => setIsShown(!isShown)} {...restProps}>
-            {children}
-        </Header>
-    )
+  const { index } = useAccordionItemContext();
+  const { setSelectedIndex } = useAccordionFrameContext();
+
+  return (
+    <Header onClick={() => setSelectedIndex(index)} {...restProps}>
+      {children}
+    </Header>
+  );
+};
+
+Accordion.Body = function AccordionBody({
+  children,
+  ...restProps
+}: React.PropsWithChildren<unknown>) {
+  const { selectedIndex } = useAccordionFrameContext();
+  const { index } = useAccordionItemContext();
+  const isSelected = selectedIndex === index;
+  return (
+    <Body className={isSelected ? "open" : "closed"}>
+      <span>{children}</span>
+    </Body>
+  );
+};
+
+function useAccordionItemContext() {
+  const accordionItemContext = useContext(AccordionItemContext);
+  if (!accordionItemContext)
+    throw new Error(
+      "AccordionItemContext.Provider is required in a parent component, as well as a valid value."
+    );
+  return accordionItemContext;
 }
 
-Accordion.Body = function AccordionBody({children, ...restProps}: React.PropsWithChildren<unknown>) {
-    const {isShown} = useToggleContext();
-    return (
-        <Body className={isShown ? "open": "close"}>
-            <span>{children}</span>
-        </Body>
-    )
-}
-
-function useToggleContext() {
-    const toggleContext = useContext(ToggleContext);
-    if (!toggleContext) throw new Error("ToggleContext.Provider is required in a parent component, as well as a valid value.");
-    return toggleContext;
+function useAccordionFrameContext() {
+  const accordionframeContext = useContext(AccordionFrameContext);
+  if (!accordionframeContext)
+    throw new Error(
+      "AccordionFrameContext.Provider is required in a parent component, as well as a valid value."
+    );
+  return accordionframeContext;
 }
