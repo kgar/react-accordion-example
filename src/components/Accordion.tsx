@@ -57,7 +57,6 @@ Accordion.Frame = function AccordionFrame({
           }
           return child;
         })}
-        )
       </Frame>
     </AccordionFrameContext.Provider>
   );
@@ -88,10 +87,16 @@ Accordion.ItemHeader = function AccordionHeader({
   ...restProps
 }: React.PropsWithChildren<unknown>) {
   const { index } = useAccordionItemContext();
-  const { setSelectedIndex } = useAccordionFrameContext();
+  const { selectedIndex, setSelectedIndex } = useAccordionFrameContext();
+
+  const onHeaderClicked = () => {
+    const newIndex = index === selectedIndex ? undefined : index;
+
+    setSelectedIndex(newIndex);
+  };
 
   return (
-    <Header onClick={() => setSelectedIndex(index)} {...restProps}>
+    <Header onClick={onHeaderClicked} {...restProps}>
       {children}
     </Header>
   );
